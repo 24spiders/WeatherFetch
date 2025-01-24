@@ -127,7 +127,10 @@ def netcdf_to_csv(nc4_file_path, variable, output_csv_path, bbox=None, dates=Non
     df = load_nc4(nc4_file_path, variable, verbose=False)
     
     # Ensure date column is in datetime format
-    df['date'] = pd.to_datetime(df['date'], format='%m/%d/%Y %I:%M:%S %p')
+    try:
+        df['date'] = pd.to_datetime(df['date'], format='%m/%d/%Y %I:%M:%S %p')
+    except ValueError:
+        df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d %H:%M:%S')
 
     # Filter data by bounding box if provided
     if bbox:
