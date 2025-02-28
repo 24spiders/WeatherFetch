@@ -15,11 +15,11 @@ dataset = 'M2SDNXSLV'
 bbox = (-114.3, 53.4, -113.4, 54.0)
 dates = ('2001-01-01', '2001-01-02')
 
-downloaded_files = search_download_merra2(output_dir, 
-                                          dataset, 
-                                          bbox, 
-                                          dates, 
-                                          verbose = True)
+downloaded_files = search_download_merra2(output_dir,
+                                          dataset,
+                                          bbox,
+                                          dates,
+                                          verbose=True)
 
 # Apply spatial filters
 from weatherfetch.point_ops import nearest_n_points, points_within_d
@@ -27,22 +27,20 @@ nc4_file_path = downloaded_files[0]
 variable = 'T2MMAX'
 point = (-113.5, 53.5)
 
-## Find the nearest 'n' points
-nearest_n_points(nc4_file_path, 
-                 variable, 
+# Find the nearest 'n' points
+nearest_n_points(nc4_file_path,
+                 variable,
                  point,
-                 n_pts = 10,
-                 output_csv_path = './Test/test_n.csv', 
-                 output_shp_path = './Test/test_n.shp',
-                 )
-## Find points within a distance
-points_within_d(nc4_file_path, 
-                variable, 
-                point, 
-                d = 1000, # Metres 
-                output_csv_path = './Test/test_n.csv', 
-                output_shp_path = './Test/test_n.shp',
-                )
+                 n_pts=10,
+                 output_csv_path='./Test/test_n.csv',
+                 output_shp_path='./Test/test_n.shp')
+# Find points within a distance
+points_within_d(nc4_file_path,
+                variable,
+                point,
+                d=1000,  # metres
+                output_csv_path='./Test/test_n.csv',
+                output_shp_path='./Test/test_n.shp')
 ```
 To interpolate data and save as a raster,
 ```py
