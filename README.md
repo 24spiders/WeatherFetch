@@ -29,20 +29,20 @@ point = (-113.5, 53.5)
 
 ## Find the nearest 'n' points
 nearest_n_points(nc4_file_path, 
-                     variable, 
-                     point,
-                     n_pts = 10,
-                     output_csv_path = './Test/test_n.csv', 
-                     output_shp_path = './Test/test_n.shp',
-                     )
+                 variable, 
+                 point,
+                 n_pts = 10,
+                 output_csv_path = './Test/test_n.csv', 
+                 output_shp_path = './Test/test_n.shp',
+                 )
 ## Find points within a distance
 points_within_d(nc4_file_path, 
-                    variable, 
-                    point, 
-                    d = 1000, # Metres 
-                    output_csv_path = './Test/test_n.csv', 
-                    output_shp_path = './Test/test_n.shp',
-                    )
+                variable, 
+                point, 
+                d = 1000, # Metres 
+                output_csv_path = './Test/test_n.csv', 
+                output_shp_path = './Test/test_n.shp',
+                )
 ```
 To interpolate data and save as a raster,
 ```py
