@@ -1,3 +1,6 @@
+import os
+os.chdir(r'D:\Users\Liam\Documents\02 - Projects\WeatherFetch')
+
 # Download a file
 from weatherfetch.earthaccess_fetch import search_download_merra2
 output_dir = './Test/'

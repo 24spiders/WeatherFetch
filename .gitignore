@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 /Test
 weatherfetch/main_ignore.py
+weatherfetch/example.py
