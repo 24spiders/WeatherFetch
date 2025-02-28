@@ -11,6 +11,7 @@ from shapely.geometry import Point
 
 from .nc4_utils import load_nc4
 
+
 def find_nearest_n_points(lat, lon, df, n_pts):
     """
     Filters a DataFrame to the nearest 'n_pts' points to a given (lat, lon) based on latitude and longitude.
@@ -55,6 +56,7 @@ def find_nearest_n_points(lat, lon, df, n_pts):
     filtered_df = filtered_df.drop(columns=['distance'])
 
     return filtered_df
+
 
 def find_points_within_d(lat, lon, df, d):
     """
@@ -101,12 +103,13 @@ def find_points_within_d(lat, lon, df, d):
 
     return filtered_df
 
-def nearest_n_points(nc4_file_path, 
-                     variable, 
+
+def nearest_n_points(nc4_file_path,
+                     variable,
                      point,
-                     n_pts = 1,
-                     output_csv_path = None, 
-                     output_shp_path = None,
+                     n_pts=1,
+                     output_csv_path=None,
+                     output_shp_path=None,
                      ):
     """
     Loads an NC4 file into a Pandas DataFrame, spatially filters the DataFrame to contain only the nearest 'n_pts' points to 'point'.
@@ -125,37 +128,37 @@ def nearest_n_points(nc4_file_path,
     """
     # Get lat and lon
     lon, lat = point
-    
-    # Load the nc4 
-    df = load_nc4(nc4_file_path, variable, verbose = False)
-    
+
+    # Load the nc4
+    df = load_nc4(nc4_file_path, variable, verbose=False)
+
     if 'hour' in df.columns:
         # Filter to nearest n points. Here, n_pts * 24 due to the hourly overlapping points
         df = find_nearest_n_points(lat, lon, df, n_pts * 24)
     else:
         # Filter to nearest n points
         df = find_nearest_n_points(lat, lon, df, n_pts)
-        
+
     # Save to CSV if path is provided
     if output_csv_path:
         df.to_csv(output_csv_path, index=False)
-    
+
     if output_shp_path:
         # Use geopandas to output as shp
         geometry = [Point(xy) for xy in zip(df['longitude'], df['latitude'])]
         gdf = gpd.GeoDataFrame(df, geometry=geometry)
         gdf.set_crs('EPSG:4326', inplace=True)
         gdf.to_file(output_shp_path, driver='ESRI Shapefile')
-    
+
     return df
-    
-def points_within_d(nc4_file_path, 
-                    variable, 
-                    point, 
-                    d, 
-                    output_csv_path = None, 
-                    output_shp_path = None
-                    ):
+
+
+def points_within_d(nc4_file_path,
+                    variable,
+                    point,
+                    d,
+                    output_csv_path=None,
+                    output_shp_path=None):
     """
     Loads an NC4 file into a Pandas DataFrame, spatially filters the DataFrame to contain only points within distance 'd' to 'point'.
 
@@ -163,7 +166,7 @@ def points_within_d(nc4_file_path,
         nc4_file_path (str): The path to the NC4 file to load.
         variable (str): The name of the variable to retrieve from the NC4 file.
         point (tuple): (longitude, latitude) of the point of interest in EPSG:4326.
-        d (float): The distance (in METRES) to find points within to 'point' 
+        d (float): The distance (in METRES) to find points within to 'point'
         output_csv_path (str, optional): The path to save the CSV file (if desired). Defaults to None.
         output_shp_path (str, optional): The path to save the SHP file (if desired). Defaults to None.
 
@@ -176,29 +179,29 @@ def points_within_d(nc4_file_path,
     """
     # Get lat and lon
     lon, lat = point
-    
-    # Load the nc4 
-    df = load_nc4(nc4_file_path, variable, verbose = False)
-    
+
+    # Load the nc4
+    df = load_nc4(nc4_file_path, variable, verbose=False)
+
     if 'hour' in df.columns:
         # Filter to nearest n points. Here, n_pts * 24 due to the hourly overlapping points
         df = find_points_within_d(lat, lon, df, d)
     else:
         # Filter to nearest n points
         df = find_points_within_d(lat, lon, df, d)
-    
+
     if len(df) == 0:
         raise Exception(f'No points found within {d}')
-    
+
     # Save to CSV if path is provided
     if output_csv_path:
         df.to_csv(output_csv_path, index=False)
-    
+
     if output_shp_path:
         # Use geopandas to output as shp
         geometry = [Point(xy) for xy in zip(df['longitude'], df['latitude'])]
         gdf = gpd.GeoDataFrame(df, geometry=geometry)
         gdf.set_crs('EPSG:4326', inplace=True)
         gdf.to_file(output_shp_path, driver='ESRI Shapefile')
-    
+
     return df
