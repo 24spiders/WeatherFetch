@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 
-def load_nc4(nc4_file_path, variable, verbose=True):
+def load_nc4(nc4_file_path, variable=None, verbose=True):
     """
     Loads a variable from an NC4 file into a Pandas DataFrame.
     If the NC4 contains hourly data, a row is written for each hour.
@@ -20,7 +20,7 @@ def load_nc4(nc4_file_path, variable, verbose=True):
 
     Args:
         nc4_file_path (str): The path to the NC4 file to load.
-        variable (str): The name of the variable to retrieve from the NC4 file.
+        variable (str, optional): The name of the variable to retrieve from the NC4 file. If not passed, function prints possible variables and exits. Default is None.
         verbose (bool, optional): Prints the valid keys in the NC4 file if True. Defaults to True.
 
     Raises:
