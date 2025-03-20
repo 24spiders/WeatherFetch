@@ -31,6 +31,8 @@ def load_nc4(nc4_file_path, variable=None, verbose=True):
     """
     # Open the NetCDF file
     dataset = nc.Dataset(nc4_file_path, 'r')
+    if variable is None:
+        raise Exception(f"'variable' is None, NC4 Keys: {dataset.variables.keys()}")
     if verbose:
         print(f'NC4 Keys: {dataset.variables.keys()}')
 
