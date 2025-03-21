@@ -10,31 +10,76 @@ import warnings
 import netCDF4 as nc
 import numpy as np
 import pandas as pd
+from datetime import datetime, timedelta
+import cartopy.crs as ccrs
 
 
-def load_nc4(nc4_file_path, variable=None, verbose=True):
+def rotated_to_absolute(rlat, rlon, pole_lat, pole_lon):
     """
-    Loads a variable from an NC4 file into a Pandas DataFrame.
-    If the NC4 contains hourly data, a row is written for each hour.
-    If the NC4 contains daily data, a row is written for each day.
+    Converts rotated grid coordinates (rlat, rlon) to absolute geographic coordinates (lat, lon).
 
     Args:
-        nc4_file_path (str): The path to the NC4 file to load.
-        variable (str, optional): The name of the variable to retrieve from the NC4 file. If not passed, function prints possible variables and exits. Default is None.
-        verbose (bool, optional): Prints the valid keys in the NC4 file if True. Defaults to True.
+        rlat (array-like): Rotated latitude in degrees.
+        rlon (array-like): Rotated longitude in degrees.
+        pole_lat (float): Latitude of the rotated pole in degrees.
+        pole_lon (float): Longitude of the rotated pole in degrees.
+
+    Returns:
+        tuple: (lat, lon) in degrees (absolute geographic coordinates).
+    """
+    # Define the rotated pole coordinate system
+    rotated_crs = ccrs.RotatedPole(pole_longitude=pole_lon, pole_latitude=pole_lat)
+
+    # Define the absolute coordinate system (WGS84)
+    geo_crs = ccrs.PlateCarree()
+
+    # Transform rotated (rlat, rlon) to absolute (lat, lon)
+    transformed = geo_crs.transform_points(rotated_crs, rlon, rlat)
+    lat, lon = transformed[..., 1], transformed[..., 0]
+
+    return lat, lon
+
+
+def hours_since(hours_since, reference_date_time):
+    """
+    Returns the day and time by using 'hours since reference_date_time'
+
+    Args:
+        hours_since (float): Number of hours since reference_date_time.
+        reference_date_time (str): YYYY-MM-DD HH:MM:ss.
+
+    Returns:
+        (year, month, day) and hour since reference_date_time.
+
+    """
+    ref_time = datetime.strptime(reference_date_time, '%Y-%m-%d %H:%M:%S')
+    new_time = ref_time + timedelta(hours=hours_since)
+    return (new_time.year, new_time.month, new_time.day), new_time.hour
+
+
+def load_nc4(netCDF_file_path, variable=None, verbose=True):
+    """
+    Loads a variable from a netCDF file into a Pandas DataFrame.
+    If the netCDF contains hourly data, a row is written for each hour.
+    If the netCDF contains daily data, a row is written for each day.
+
+    Args:
+        netCDF_file_path (str): The path to the netCDF file to load.
+        variable (str, optional): The name of the variable to retrieve from the netCDF file. If not passed, function prints possible variables and exits. Default is None.
+        verbose (bool, optional): Prints the valid keys in the netCDF file if True. Defaults to True.
 
     Raises:
         ValueError: Variable not found in the NetCDF file.
 
     Returns:
-        df (pd.DataFrame): The loaded data from the NC4 file with columns ['latitude', 'longitude', 'date', 'hours' (if hourly data), variable].
+        df (pd.DataFrame): The loaded data from the netCDF file with columns ['latitude', 'longitude', 'date', 'hours' (if hourly data), variable].
     """
     # Open the NetCDF file
-    dataset = nc.Dataset(nc4_file_path, 'r')
+    dataset = nc.Dataset(netCDF_file_path, 'r')
     if variable is None:
-        raise Exception(f"'variable' is None, NC4 Keys: {dataset.variables.keys()}")
+        raise Exception(f"'variable' is None, netCDF Keys: {dataset.variables.keys()}")
     if verbose:
-        print(f'NC4 Keys: {dataset.variables.keys()}')
+        print(f'netCDF Keys: {dataset.variables.keys()}')
 
     # Get the variable data
     if variable not in dataset.variables:
@@ -43,18 +88,34 @@ def load_nc4(nc4_file_path, variable=None, verbose=True):
     var_data = dataset.variables[variable][:]
 
     # Get latitude and longitude, filter to nearest n_pts
-    lat_var = next((var for var in ['Latitude', 'latitude', 'lat'] if var in dataset.variables), None)
-    lon_var = next((var for var in ['Longitude', 'longitude', 'lon'] if var in dataset.variables), None)
-    lats = dataset.variables[lat_var]
-    lons = dataset.variables[lon_var]
-
-    # Create meshgrid of lats and lons
-    lon_grid, lat_grid = np.meshgrid(lons, lats)
+    if 'rlat' in dataset.variables and 'rlon' in dataset.variables:
+        if verbose:
+            print('Detected rotated pole coordinates!')
+            print(dataset.variables['rotated_pole'])
+        rotated_pole_lat = dataset.variables['rotated_pole'].grid_north_pole_latitude
+        rotated_pole_lon = dataset.variables['rotated_pole'].grid_north_pole_longitude
+        rlats = dataset.variables['rlat']
+        rlons = dataset.variables['rlon']
+        # Create meshgrid of rlats and rlons
+        rlon_grid, rlat_grid = np.meshgrid(rlons, rlats)
+        rlats_flat = rlat_grid.flatten()
+        rlons_flat = rlon_grid.flatten()
+        lats_flat, lons_flat = rotated_to_absolute(rlats_flat, rlons_flat, rotated_pole_lat, rotated_pole_lon)
+    else:
+        lat_var = next((var for var in ['Latitude', 'latitude', 'lat'] if var in dataset.variables), None)
+        lon_var = next((var for var in ['Longitude', 'longitude', 'lon'] if var in dataset.variables), None)
+        lats = dataset.variables[lat_var]
+        lons = dataset.variables[lon_var]
+        # Create meshgrid of lats and lons
+        lon_grid, lat_grid = np.meshgrid(lons, lats)
+        lats_flat = lat_grid.flatten()
+        lons_flat = lat_grid.flatten()
 
     # Get date
     time_var = next((var for var in ['Time', 'time'] if var in dataset.variables), None)
-    time_var = dataset.variables['time']
-    # Catch warnings here: dtype compatibility can be noisy due to issues with the nc4 file format
+    time_var = dataset.variables[time_var]
+
+    # Catch warnings here: dtype compatibility can be noisy due to issues with the netCDF file format
     with warnings.catch_warnings(record=True):
         warnings.simplefilter('always')
         time_var_data = time_var[:]
@@ -70,9 +131,9 @@ def load_nc4(nc4_file_path, variable=None, verbose=True):
         var_flat = var_data.reshape(24, -1)  # [24 hours, lat * lon]
 
         # Repeat lat/lon coordinates for each hour
-        lats_flat = np.tile(lat_grid.flatten(), 24)
+        lats_flat = np.tile(lats_flat, 24)
 
-        lons_flat = np.tile(lon_grid.flatten(), 24)
+        lons_flat = np.tile(lons_flat, 24)
 
         # Hour labels from 0 to 23 for each lat/lon point
         hours = [f'{m // 60:02}:{m % 60:02}' for m in time_var_data]
@@ -93,9 +154,11 @@ def load_nc4(nc4_file_path, variable=None, verbose=True):
 
     # Else, daily
     elif time_var.shape[0] == 1:
-        lats_flat = lat_grid.flatten()
-        lons_flat = lon_grid.flatten()
+        if 'hours since' in time_var.units:
+            ref_date_time = ' '.join(time_var.units.split()[2:])
+            _, time = hours_since(time_var_data[0], ref_date_time)
         dates_flat = np.array([date] * len(lons_flat))
+        times_flat = np.array([time] * len(lons_flat))
         var_flat = var_data.flatten()
 
         # Create DataFrame
@@ -103,6 +166,7 @@ def load_nc4(nc4_file_path, variable=None, verbose=True):
             'latitude': lats_flat,
             'longitude': lons_flat,
             'date': dates_flat,
+            'time': times_flat,
             variable: var_flat
         })
 
@@ -115,13 +179,13 @@ def load_nc4(nc4_file_path, variable=None, verbose=True):
     return df
 
 
-def netcdf_to_csv(nc4_file_path, variable, output_csv_path, bbox=None, dates=None):
+def netcdf_to_csv(netCDF_file_path, variable, output_csv_path, bbox=None, dates=None):
     """
-    Converts a NetCDF4 file to CSV with optional spatial and temporal filtering.
+    Converts a netCDF file to CSV with optional spatial and temporal filtering.
 
     Args:
-        nc4_file_path (str): The path to the NC4 file to load.
-        variable (str): The name of the variable to retrieve from the NC4 file.
+        netCDF_file_path (str): The path to the netCDF file to load.
+        variable (str): The name of the variable to retrieve from the netCDF file.
         output_csv_path (str): The path to save the CSV file.
         bbox (tuple, optional): Bounding box (min_lon, min_lat, max_lon, max_lat) in lat/lon (EPSG:4326).
         dates (tuple, optional): Date range (min_date, max_date) in format 'YYYY-MM-DD'.
@@ -129,8 +193,8 @@ def netcdf_to_csv(nc4_file_path, variable, output_csv_path, bbox=None, dates=Non
     Returns:
         df (pd.DataFrame): The loaded and filtered data with columns ['latitude', 'longitude', 'date', variable].
     """
-    # Load the nc4 file into a DataFrame
-    df = load_nc4(nc4_file_path, variable, verbose=False)
+    # Load the netCDF file into a DataFrame
+    df = load_nc4(netCDF_file_path, variable, verbose=False)
 
     # Ensure date column is in datetime format
     try:

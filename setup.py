@@ -12,7 +12,7 @@ setup(
     version='0.1.0',
     author='Liam Bennett',
     description='A brief description of your package',
-    long_description=open('README.md').read(), 
+    long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     url='https://github.com/24spiders/WeatherFetch',
     packages=find_packages(),
@@ -25,6 +25,7 @@ setup(
         'pandas',
         'shapely',
         'h5py',
-        'scipy'
+        'scipy',
+        'cartopy'
     ],
 )
