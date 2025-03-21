@@ -14,7 +14,7 @@ Some specific features:
 ## Usage
 All functions contain docstrings documenting their use. Some examples are provided below.
 
-Load an HRDPS NC file, spatially filter it, convert to CSV
+Load a HRDPS NC file, spatially filter it, convert to CSV
 ```py
 from weatherfetch.nc4_utils import load_nc4, netcdf_to_csv
 
