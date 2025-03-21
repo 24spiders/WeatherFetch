@@ -1,10 +1,32 @@
 # WeatherFetch
-WeatherFetch automatically downloads climatic variables and outputs them in analysis-ready spatial formats.
+WeatherFetch automatically downloads climatic variables and outputs them in analysis-ready spatial formats. Note that WeatherFetch is my personal research code, meaning you may use it or modify it as you want, but may not be highly robust or extensively supported.
+Some specific features:
+
+1. Load NC files into Pandas DataFrames
+2. Convert between rotated grid coordinates and absolute geographic coordinates
+3. Spatially and temporally filter data
+4. Output converted and filtered NC data as .csv
+5. Automatically fetch MERRA-2 data using `earthaccess`
+6. Create spatially projected rasters of interpolated weather data (from NC files)
 
 ![Example showing a spatially projected interpolated array and surrounding datapoints](interpolated.jpeg)
 
 ## Usage
 All functions contain docstrings documenting their use. Some examples are provided below.
+
+Load an HRDPS NC file, spatially filter it, convert to CSV
+```py
+from weatherfetch.nc4_utils import load_nc4, netcdf_to_csv
+
+nc_file = '2017080100_000.nc'
+
+# Load into DataFrame
+df = load_nc4(nc_file, variable='UU')
+
+# Set bbox in EPSG:4326
+bbox = [-114.5, 52.5, -111.5, 54]  # min_lon, min_lat, max_lon, max_lat
+netcdf_to_csv(nc_file, 'UU', 'UU.csv', bbox=bbox, dates=None)  # Don't filter by date (this file contains only one day)
+```
 
 To download a dataset, apply a spatial filter, and save to CSV,
 ```py
