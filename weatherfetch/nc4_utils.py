@@ -83,7 +83,7 @@ def load_nc4(netCDF_file_path, variable=None, verbose=True):
 
     # Get the variable data
     if variable not in dataset.variables:
-        raise ValueError(f'Variable {variable} not found in NetCDF file! Check keys.')
+        raise ValueError(f'Variable {variable} not found in NetCDF file! Check keys: {dataset.variables.keys()}.')
 
     var_data = dataset.variables[variable][:]
 

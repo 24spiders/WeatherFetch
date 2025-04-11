@@ -179,6 +179,7 @@ class ProcessingOptions:
         reproj (dict, optional): Reprojection parameters for the output image if reprojection is desired. Should be provided in the format:
             `{'epsg': <EPSG_CODE>, 'bbox': (min_x, min_y, max_x, max_y)}`. bbox coordinates are in EPSG_CODE Defaults to None.
         convert_h5 (bool, optional): If True, converts the output GeoTIFF file to HDF5 format and removes the original TIFF file. Defaults to False.
+        verbose (bool, options): Verbosity. Defaults to False
     """
     variable: str  # Required
     bbox: List[float]  # xmin, ymin, xmax, ymax
@@ -191,6 +192,7 @@ class ProcessingOptions:
     avg_hours: Optional[float] = None  # Only for mode == 'avg_hourly'
     reproj: Optional[Dict[str, Union[int, List[float]]]] = None  # {'epsg': int, 'bbox': List[float]}
     convert_h5: bool = False  # Defaults to False
+    verbose: bool = False
 
     def __post_init__(self):
         """Ensures mutually exclusive options and validates inputs."""
@@ -222,7 +224,7 @@ def interpolate_in_bbox(nc4_file_path,
         AssertionError: Raised if input parameters are invalid or mutually exclusive conditions are not met.
     """
     # Load and filter dataframe
-    df = load_nc4(nc4_file_path, options.variable, verbose=False)
+    df = load_nc4(nc4_file_path, options.variable, verbose=options.verbose)
 
     west_lon, south_lat, east_lon, north_lat = options.bbox
     lat = (south_lat + north_lat) / 2
@@ -281,7 +283,6 @@ def interpolate_in_bbox(nc4_file_path,
     lon_grid = np.arange(grid_west, grid_east + lon_step, lon_step)
 
     lon_grid, lat_grid = np.meshgrid(lon_grid, lat_grid)
-
     if 'interval' not in df.columns:
         interpolated = griddata(
             df[['longitude', 'latitude']].values,
@@ -300,35 +301,37 @@ def interpolate_in_bbox(nc4_file_path,
             interpolated = np.where(np.isnan(interpolated), extrap, interpolated)
 
         # Crop to requested bbox
-        mask = ((lon_grid >= west_lon) & (lon_grid <= east_lon)
-                & (lat_grid >= south_lat) & (lat_grid <= north_lat))
+        mask = ((lon_grid >= west_lon) & (lon_grid <= east_lon) &
+                (lat_grid >= south_lat) & (lat_grid <= north_lat))
         interpolated = interpolated[mask].reshape(1, -1)
 
     else:
         unique_intervals = df['interval'].unique()
+        unique_intervals = sorted(unique_intervals, key=lambda x: int(x.split('-')[0]))
         interpolated_list = []
 
         for interval in unique_intervals:
             df_interval = df[df['interval'] == interval]
-
             interpolated_interval = griddata(
                 df_interval[['longitude', 'latitude']].values,
                 df_interval[options.variable].values,
                 (lon_grid, lat_grid),
                 method=options.method
             )
+
             if np.any(np.isnan(interpolated_interval)):
                 extrap = griddata(
                     df_interval[['longitude', 'latitude']].values,
                     df_interval[options.variable].values,
                     (lon_grid, lat_grid),
-                    method='nearest'
+                    method='linear'
                 )
+
                 interpolated_interval = np.where(np.isnan(interpolated_interval), extrap, interpolated_interval)
 
             # Crop to requested bbox
-            mask = ((lon_grid >= west_lon) & (lon_grid <= east_lon)
-                    & (lat_grid >= south_lat) & (lat_grid <= north_lat))
+            mask = ((lon_grid >= west_lon) & (lon_grid <= east_lon) &
+                    (lat_grid >= south_lat) & (lat_grid <= north_lat))
             interpolated_interval = interpolated_interval[mask]
             interpolated_list.append(interpolated_interval)
 
@@ -352,5 +355,6 @@ def interpolate_in_bbox(nc4_file_path,
     if options.convert_h5:
         output_path = convert_to_h5(output_path, remove_tif=True)
 
-    print(f"Saved interpolated raster to {output_path}")
+    if options.verbose:
+        print(f"Saved interpolated raster to {output_path}")
     return output_path

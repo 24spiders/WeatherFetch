@@ -77,15 +77,17 @@ def build_url(dataset, date):
 
     elif dataset == 'M2I1NXASM':
         if int(year) == 2021 and int(month) in [6, 7, 8, 9]:
-            url = f'https://opendap.earthdata.nasa.gov/collections/C1276812820-GES_DISC/granules/M2I1NXASM.5.12.4%3AMERRA2_401.inst1_2d_asm_Nx.{year}{month}{day}.nc4.dap.nc4?dap4.ce=/U2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/V2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/T2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/time;/lat%5B264:348%5D;/lon%5B3:280%5D'
+            url = f'https://opendap.earthdata.nasa.gov/collections/C1276812820-GES_DISC/granules/M2I1NXASM.5.12.4%3AMERRA2_401.inst1_2d_asm_Nx.{year}{month}{day}.nc4.dap.nc4?dap4.ce=/U10M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/V10M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/T10M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/QV10M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/QV2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/PS%5B0:23%5D%5B264:348%5D%5B3:280%5D;/TS%5B0:23%5D%5B264:348%5D%5B3:280%5D;/T2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/time;/lat%5B264:348%5D;/lon%5B3:280%5D'
             filename = f'MERRA2_401.inst1_2d_asm_Nx.{year}{month}{day}.nc4'
         elif int(year) == 2020 and int(month) in [9]:
-            url = f'https://opendap.earthdata.nasa.gov/collections/C1276812820-GES_DISC/granules/M2I1NXASM.5.12.4%3AMERRA2_401.inst1_2d_asm_Nx.{year}{month}{day}.nc4.dap.nc4?dap4.ce=/U2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/V2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/T2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/time;/lat%5B264:348%5D;/lon%5B3:280%5D'
+            url = f'https://opendap.earthdata.nasa.gov/collections/C1276812820-GES_DISC/granules/M2I1NXASM.5.12.4%3AMERRA2_401.inst1_2d_asm_Nx.{year}{month}{day}.nc4.dap.nc4?dap4.ce=/U10M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/V10M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/T10M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/QV10M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/QV2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/PS%5B0:23%5D%5B264:348%5D%5B3:280%5D;/TS%5B0:23%5D%5B264:348%5D%5B3:280%5D;/T2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/time;/lat%5B264:348%5D;/lon%5B3:280%5D'
+            filename = f'M2I1NXASM.5.12.4%3AMERRA2_401.inst1_2d_asm_Nx.{year}{month}{day}.nc4.dap.nc4'
         elif int(year) >= 2011:
-            url = f'https://opendap.earthdata.nasa.gov/collections/C1276812820-GES_DISC/granules/M2I1NXASM.5.12.4%3AMERRA2_400.inst1_2d_asm_Nx.{year}{month}{day}.nc4.dap.nc4?dap4.ce=/U2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/V2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/T2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/time;/lat%5B264:348%5D;/lon%5B3:280%5D'
+            url = f'https://opendap.earthdata.nasa.gov/collections/C1276812820-GES_DISC/granules/M2I1NXASM.5.12.4%3AMERRA2_400.inst1_2d_asm_Nx.{year}{month}{day}.nc4.dap.nc4?dap4.ce=/U10M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/V10M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/T10M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/QV10M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/QV2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/PS%5B0:23%5D%5B264:348%5D%5B3:280%5D;/TS%5B0:23%5D%5B264:348%5D%5B3:280%5D;/T2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/time;/lat%5B264:348%5D;/lon%5B3:280%5D'
+            filename = f'M2I1NXASM.5.12.4%3AMERRA2_400.inst1_2d_asm_Nx.{year}{month}{day}.nc4.dap.nc4'
         else:
-            url = f'https://opendap.earthdata.nasa.gov/collections/C1276812820-GES_DISC/granules/M2I1NXASM.5.12.4%3AMERRA2_300.inst1_2d_asm_Nx.{year}{month}{day}.nc4.dap.nc4?dap4.ce=/U2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/V2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/T2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/time;/lat%5B264:348%5D;/lon%5B3:280%5D'
-        filename = f'M2I1NXASM.5.12.4%3AMERRA2_300.inst1_2d_asm_Nx.{year}{month}{day}.nc4.dap.nc4'
+            url = f'https://opendap.earthdata.nasa.gov/collections/C1276812820-GES_DISC/granules/M2I1NXASM.5.12.4%3AMERRA2_300.inst1_2d_asm_Nx.{year}{month}{day}.nc4.dap.nc4?dap4.ce=/U10M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/V10M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/T10M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/QV10M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/QV2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/PS%5B0:23%5D%5B264:348%5D%5B3:280%5D;/TS%5B0:23%5D%5B264:348%5D%5B3:280%5D;/T2M%5B0:23%5D%5B264:348%5D%5B3:280%5D;/time;/lat%5B264:348%5D;/lon%5B3:280%5D'
+            filename = f'M2I1NXASM.5.12.4%3AMERRA2_300.inst1_2d_asm_Nx.{year}{month}{day}.nc4.dap.nc4'
     else:
         raise Exception('Dataset not recognized, could not build URL!')
 
