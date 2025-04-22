@@ -67,13 +67,16 @@ def build_url(dataset, date):
     elif dataset == 'M2T1NXFLX':
         if (int(year) == 2021 and int(month) in [6, 7, 8, 9]) or (int(year) == 2020 and int(month) == 9):
             url = f'https://opendap.earthdata.nasa.gov/collections/C1276812838-GES_DISC/granules/M2T1NXFLX.5.12.4%3AMERRA2_401.tavg1_2d_flx_Nx.{year}{month}{day}.nc4.dap.nc4?dap4.ce=/ULML%5B0:23%5D%5B264:348%5D%5B3:280%5D;/VLML%5B0:23%5D%5B264:348%5D%5B3:280%5D;/PRECTOT%5B0:23%5D%5B264:348%5D%5B3:280%5D;/time;/lat%5B264:348%5D;/lon%5B3:280%5D'
+            filename = f'M2T1NXFLX.5.12.4%3AMERRA2_401.tavg1_2d_flx_Nx.{year}{month}{day}.nc4.dap.nc4'
         elif int(year) == 2000:
             url = f'https://opendap.earthdata.nasa.gov/collections/C1276812838-GES_DISC/granules/M2T1NXFLX.5.12.4%3AMERRA2_200.tavg1_2d_flx_Nx.{year}{month}{day}.nc4.dap.nc4?dap4.ce=/ULML%5B0:23%5D%5B264:348%5D%5B3:280%5D;/VLML%5B0:23%5D%5B264:348%5D%5B3:280%5D;/PRECTOT%5B0:23%5D%5B264:348%5D%5B3:280%5D;/time;/lat%5B264:348%5D;/lon%5B3:280%5D'
+            filename = f'M2T1NXFLX.5.12.4%3AMERRA2_200.tavg1_2d_flx_Nx.{year}{month}{day}.nc4.dap.nc4'
         elif int(year) >= 2011:
             url = f'https://opendap.earthdata.nasa.gov/collections/C1276812838-GES_DISC/granules/M2T1NXFLX.5.12.4%3AMERRA2_400.tavg1_2d_flx_Nx.{year}{month}{day}.nc4.dap.nc4?dap4.ce=/ULML%5B0:23%5D%5B264:348%5D%5B3:280%5D;/VLML%5B0:23%5D%5B264:348%5D%5B3:280%5D;/PRECTOT%5B0:23%5D%5B264:348%5D%5B3:280%5D;/time;/lat%5B264:348%5D;/lon%5B3:280%5D'
+            filename = f'M2T1NXFLX.5.12.4%3AMERRA2_400.tavg1_2d_flx_Nx.{year}{month}{day}.nc4.dap.nc4'
         else:
             url = f'https://opendap.earthdata.nasa.gov/collections/C1276812838-GES_DISC/granules/M2T1NXFLX.5.12.4%3AMERRA2_300.tavg1_2d_flx_Nx.{year}{month}{day}.nc4.dap.nc4?dap4.ce=/ULML%5B0:23%5D%5B264:348%5D%5B3:280%5D;/VLML%5B0:23%5D%5B264:348%5D%5B3:280%5D;/PRECTOT%5B0:23%5D%5B264:348%5D%5B3:280%5D;/time;/lat%5B264:348%5D;/lon%5B3:280%5D'
-        filename = f'M2T1NXFLX.5.12.4%3AMERRA2_300.tavg1_2d_flx_Nx.{year}{month}{day}.nc4.dap.nc4'
+            filename = f'M2T1NXFLX.5.12.4%3AMERRA2_300.tavg1_2d_flx_Nx.{year}{month}{day}.nc4.dap.nc4'
 
     elif dataset == 'M2I1NXASM':
         if int(year) == 2021 and int(month) in [6, 7, 8, 9]:

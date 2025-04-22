@@ -135,6 +135,7 @@ def nearest_n_points(nc4_file_path,
     if 'hour' in df.columns:
         # Filter to nearest n points. Here, n_pts * 24 due to the hourly overlapping points
         df = find_nearest_n_points(lat, lon, df, n_pts * 24)
+
     else:
         # Filter to nearest n points
         df = find_nearest_n_points(lat, lon, df, n_pts)

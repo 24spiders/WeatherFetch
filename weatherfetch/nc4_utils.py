@@ -109,7 +109,7 @@ def load_nc4(netCDF_file_path, variable=None, verbose=True):
         # Create meshgrid of lats and lons
         lon_grid, lat_grid = np.meshgrid(lons, lats)
         lats_flat = lat_grid.flatten()
-        lons_flat = lat_grid.flatten()
+        lons_flat = lon_grid.flatten()
 
     # Get date
     time_var = next((var for var in ['Time', 'time', 'time1'] if var in dataset.variables), None)
