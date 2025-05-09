@@ -57,6 +57,23 @@ def hours_since(hours_since, reference_date_time):
     return (new_time.year, new_time.month, new_time.day), new_time.strftime('%H:%M:%S')
 
 
+def seconds_since(seconds_since, reference_date_time):
+    """
+    Returns the day and time by using 'seconds since reference_date_time'
+
+    Args:
+        seconds_since (float): Number of seconds since reference_date_time.
+        reference_date_time (str): YYYY-MM-DD HH:MM:ss.
+
+    Returns:
+        (year, month, day) and hour since reference_date_time.
+
+    """
+    ref_time = datetime.strptime(reference_date_time, '%Y-%m-%d %H:%M:%S')
+    new_time = ref_time + timedelta(seconds=seconds_since)
+    return (new_time.year, new_time.month, new_time.day), new_time.strftime('%H:%M:%S')
+
+
 def load_nc4(netCDF_file_path, variable=None, verbose=True):
     """
     Loads a variable from a netCDF file into a Pandas DataFrame.
@@ -112,7 +129,7 @@ def load_nc4(netCDF_file_path, variable=None, verbose=True):
         lons_flat = lon_grid.flatten()
 
     # Get date
-    time_var = next((var for var in ['Time', 'time', 'time1'] if var in dataset.variables), None)
+    time_var = next((var for var in ['Time', 'time', 'time1', 'valid_time'] if var in dataset.variables), None)
     time_var = dataset.variables[time_var]
 
     # Catch warnings here: dtype compatibility can be noisy due to issues with the netCDF file format
@@ -124,10 +141,30 @@ def load_nc4(netCDF_file_path, variable=None, verbose=True):
 
     # If hourly data
     if time_var.shape[0] == 24:
-        # Get date
-        date = nc.num2date(time_var_data,
-                           units=time_units,
-                           calendar='standard')[0].strftime('%Y-%m-%d %H:%M:%S')
+        if 'seconds since' in time_var.units:
+            hours = []
+            dates_flat = []
+            # Get times
+            times = nc.num2date(time_var_data,
+                                units=time_units,
+                                calendar='standard')
+            for time in times:
+                time = time.strftime('%Y-%m-%d %H:%M:%S')
+                date, time = time.split()
+                hours.append(time)
+                dates_flat.append(date)
+            hours = np.array(hours)
+            dates_flat = np.repeat(dates_flat, lat_grid.size)
+        else:
+            # Get date
+            date = nc.num2date(time_var_data,
+                               units=time_units,
+                               calendar='standard')[0].strftime('%Y-%m-%d %H:%M:%S')
+            # Hour labels from 0 to 23 for each lat/lon point
+            hours = [f'{m // 60:02}:{m % 60:02}' for m in time_var_data]
+            dates_flat = np.array([date] * len(lons_flat))
+        times_flat = np.repeat(hours, lat_grid.size)
+
         # Create rows for each hour
         var_flat = var_data.reshape(24, -1)  # [24 hours, lat * lon]
 
@@ -136,19 +173,14 @@ def load_nc4(netCDF_file_path, variable=None, verbose=True):
 
         lons_flat = np.tile(lons_flat, 24)
 
-        # Hour labels from 0 to 23 for each lat/lon point
-        hours = [f'{m // 60:02}:{m % 60:02}' for m in time_var_data]
-        hours = np.repeat(hours, lat_grid.size)
-
         # Flatten variable data to match
         var_flat = var_flat.flatten()
-        dates_flat = np.array([date] * len(lons_flat))
 
         # Create DataFrame
         df = pd.DataFrame({
             'latitude': lats_flat,
             'longitude': lons_flat,
-            'hour': hours,
+            'hour': times_flat,
             'date': dates_flat,
             variable: var_flat
         })
