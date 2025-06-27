@@ -18,7 +18,8 @@ from rasterio.warp import Resampling, calculate_default_transform, reproject
 from scipy.interpolate import griddata
 from shapely.geometry import box, mapping
 
-from .point_ops import load_nc4, find_nearest_n_points, find_points_within_d
+from weatherfetch.point_ops import find_nearest_n_points, find_points_within_d
+from weatherfetch.nc4_utils import load_nc4
 
 
 def crop_and_reproject(reproj, tif_path, remove=False):
@@ -224,7 +225,7 @@ def interpolate_in_bbox(nc4_file_path,
         AssertionError: Raised if input parameters are invalid or mutually exclusive conditions are not met.
     """
     # Load and filter dataframe
-    df = load_nc4(nc4_file_path, options.variable, verbose=options.verbose)
+    df = load_nc4(nc4_file_path, [options.variable], verbose=options.verbose)
 
     west_lon, south_lat, east_lon, north_lat = options.bbox
     lat = (south_lat + north_lat) / 2

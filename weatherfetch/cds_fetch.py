@@ -7,12 +7,21 @@ Created on Mon May  5 13:35:41 2025
 
 import cdsapi
 import os
+client = None
+
+
+def get_client():
+    global client
+    if client is None:
+        client = cdsapi.Client()
+    return client
 
 
 def download_era5land(nc_dir, year, month, day):
     # https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land?tab=overview
-    client = cdsapi.Client()
-
+    global client
+    if client is None:
+        get_client()
     dataset = "reanalysis-era5-land"
 
     request = {

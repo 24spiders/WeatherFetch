@@ -74,37 +74,37 @@ def seconds_since(seconds_since, reference_date_time):
     return (new_time.year, new_time.month, new_time.day), new_time.strftime('%H:%M:%S')
 
 
-def load_nc4(netCDF_file_path, variable=None, verbose=True):
+def load_nc4(netCDF_file_path, variables=None, verbose=True):
     """
-    Loads a variable from a netCDF file into a Pandas DataFrame.
+    Loads multiple variables from a netCDF file into a Pandas DataFrame.
     If the netCDF contains hourly data, a row is written for each hour.
     If the netCDF contains daily data, a row is written for each day.
 
     Args:
         netCDF_file_path (str): The path to the netCDF file to load.
-        variable (str, optional): The name of the variable to retrieve from the netCDF file. If not passed, function prints possible variables and exits. Default is None.
+        variables (list of str, optional): The list of variable names to retrieve from the netCDF file.
+                                           If not passed, function prints possible variables and exits. Default is None.
         verbose (bool, optional): Prints the valid keys in the netCDF file if True. Defaults to True.
 
     Raises:
         ValueError: Variable not found in the NetCDF file.
 
     Returns:
-        df (pd.DataFrame): The loaded data from the netCDF file with columns ['latitude', 'longitude', 'date', 'hours' (if hourly data), variable].
+        df (pd.DataFrame): The loaded data from the netCDF file with columns ['latitude', 'longitude', 'date',
+                           'hours' (if hourly data), variables...].
     """
     # Open the NetCDF file
     dataset = nc.Dataset(netCDF_file_path, 'r')
-    if variable is None:
-        raise Exception(f"'variable' is None, netCDF Keys: {dataset.variables.keys()}")
+    if variables is None:
+        raise Exception(f"'variables' is None, netCDF Keys: {dataset.variables.keys()}")
     if verbose:
         print(f'netCDF Keys: {dataset.variables.keys()}')
 
-    # Get the variable data
-    if variable not in dataset.variables:
-        raise ValueError(f'Variable {variable} not found in NetCDF file! Check keys: {dataset.variables.keys()}.')
+    for var in variables:
+        if var not in dataset.variables:
+            raise ValueError(f'Variable {var} not found in NetCDF file! Check keys: {dataset.variables.keys()}.')
 
-    var_data = dataset.variables[variable][:]
-
-    # Get latitude and longitude, filter to nearest n_pts
+    # Get latitude and longitude
     if 'rlat' in dataset.variables and 'rlon' in dataset.variables:
         rotated_pole_lat = dataset.variables['rotated_pole'].grid_north_pole_latitude
         rotated_pole_lon = dataset.variables['rotated_pole'].grid_north_pole_longitude
@@ -113,7 +113,6 @@ def load_nc4(netCDF_file_path, variable=None, verbose=True):
             print(f'Rotated Pole Lat: {rotated_pole_lat}, Rotated Pole Lon: {rotated_pole_lon}')
         rlats = dataset.variables['rlat']
         rlons = dataset.variables['rlon']
-        # Create meshgrid of rlats and rlons
         rlon_grid, rlat_grid = np.meshgrid(rlons, rlats)
         rlats_flat = rlat_grid.flatten()
         rlons_flat = rlon_grid.flatten()
@@ -123,7 +122,6 @@ def load_nc4(netCDF_file_path, variable=None, verbose=True):
         lon_var = next((var for var in ['Longitude', 'longitude', 'lon'] if var in dataset.variables), None)
         lats = dataset.variables[lat_var]
         lons = dataset.variables[lon_var]
-        # Create meshgrid of lats and lons
         lon_grid, lat_grid = np.meshgrid(lons, lats)
         lats_flat = lat_grid.flatten()
         lons_flat = lon_grid.flatten()
@@ -132,22 +130,17 @@ def load_nc4(netCDF_file_path, variable=None, verbose=True):
     time_var = next((var for var in ['Time', 'time', 'time1', 'valid_time'] if var in dataset.variables), None)
     time_var = dataset.variables[time_var]
 
-    # Catch warnings here: dtype compatibility can be noisy due to issues with the netCDF file format
     with warnings.catch_warnings(record=True):
         warnings.simplefilter('always')
         time_var_data = time_var[:]
 
     time_units = time_var.units
 
-    # If hourly data
     if time_var.shape[0] == 24:
         if 'seconds since' in time_var.units:
             hours = []
             dates_flat = []
-            # Get times
-            times = nc.num2date(time_var_data,
-                                units=time_units,
-                                calendar='standard')
+            times = nc.num2date(time_var_data, units=time_units, calendar='standard')
             for time in times:
                 time = time.strftime('%Y-%m-%d %H:%M:%S')
                 date, time = time.split()
@@ -156,97 +149,75 @@ def load_nc4(netCDF_file_path, variable=None, verbose=True):
             hours = np.array(hours)
             dates_flat = np.repeat(dates_flat, lat_grid.size)
         else:
-            # Get date
-            date = nc.num2date(time_var_data,
-                               units=time_units,
-                               calendar='standard')[0].strftime('%Y-%m-%d %H:%M:%S')
-            # Hour labels from 0 to 23 for each lat/lon point
+            date = nc.num2date(time_var_data, units=time_units, calendar='standard')[0].strftime('%Y-%m-%d %H:%M:%S')
             hours = [f'{m // 60:02}:{m % 60:02}' for m in time_var_data]
             dates_flat = np.array([date] * len(lons_flat))
         times_flat = np.repeat(hours, lat_grid.size)
-
-        # Create rows for each hour
-        var_flat = var_data.reshape(24, -1)  # [24 hours, lat * lon]
-
-        # Repeat lat/lon coordinates for each hour
         lats_flat = np.tile(lats_flat, 24)
-
         lons_flat = np.tile(lons_flat, 24)
 
-        # Flatten variable data to match
-        var_flat = var_flat.flatten()
-
-        # Create DataFrame
         df = pd.DataFrame({
             'latitude': lats_flat,
             'longitude': lons_flat,
             'hour': times_flat,
-            'date': dates_flat,
-            variable: var_flat
+            'date': dates_flat
         })
 
-    # Else, daily
+        for var in variables:
+            var_data = dataset.variables[var][:]
+            var_flat = var_data.reshape(24, -1).flatten()
+            df[var] = var_flat
+
     elif time_var.shape[0] == 1:
-        # Get date
-        date = nc.num2date(time_var_data,
-                           units=time_units,
-                           calendar='standard')[0].strftime('%Y-%m-%d %H:%M:%S')
+        date = nc.num2date(time_var_data, units=time_units, calendar='standard')[0].strftime('%Y-%m-%d %H:%M:%S')
         if 'hours since' in time_var.units:
             ref_date_time = ' '.join(time_var.units.split()[2:])
             _, time = hours_since(time_var_data[0], ref_date_time)
         dates_flat = np.array([date] * len(lons_flat))
         times_flat = np.array([time] * len(lons_flat))
-        var_flat = var_data.flatten()
-        # Create DataFrame
+
         df = pd.DataFrame({
             'latitude': lats_flat,
             'longitude': lons_flat,
             'date': dates_flat,
-            'time': times_flat,
-            variable: var_flat
+            'time': times_flat
         })
-    # Else, special case
-    elif len(time_var) != 1:
+
+        for var in variables:
+            var_flat = dataset.variables[var][:].flatten()
+            df[var] = var_flat
+
+    else:
         df = pd.DataFrame()
         for i, time in enumerate(time_var):
-            var_data_at_time = var_data[i]
-            date = nc.num2date(time_var_data,
-                               units=time_units,
-                               calendar='standard')[i].strftime('%Y-%m-%d %H:%M:%S')
+            date = nc.num2date(time_var_data, units=time_units, calendar='standard')[i].strftime('%Y-%m-%d %H:%M:%S')
             if 'hours since' in time_var.units:
                 ref_date_time = ' '.join(time_var.units.split()[2:])
                 _, time = hours_since(float(time), ref_date_time)
             dates_flat = np.array([date] * len(lons_flat))
             times_flat = np.array([time] * len(lons_flat))
-            var_flat = var_data_at_time.flatten()
-            # Create DataFrame
+            base_dict = {
+                'latitude': lats_flat,
+                'longitude': lons_flat,
+                'date': dates_flat,
+                'time': times_flat
+            }
             if 'rlat' in dataset.variables and 'rlon' in dataset.variables:
-                temp_df = pd.DataFrame({
-                    'rotated_latitude': rlats_flat,
-                    'rotated_longitude': rlons_flat,
-                    'latitude': lats_flat,
-                    'longitude': lons_flat,
-                    'date': dates_flat,
-                    'time': times_flat,
-                    variable: var_flat
-                })
-            else:
-                temp_df = pd.DataFrame({
-                    'latitude': lats_flat,
-                    'longitude': lons_flat,
-                    'date': dates_flat,
-                    'time': times_flat,
-                    variable: var_flat
-                })
+                base_dict['rotated_latitude'] = rlats_flat
+                base_dict['rotated_longitude'] = rlons_flat
+
+            for var in variables:
+                var_flat = dataset.variables[var][i].flatten()
+                base_dict[var] = var_flat
+
+            temp_df = pd.DataFrame(base_dict)
             df = pd.concat([df, temp_df], ignore_index=True)
 
-    # Remove rows where variable is NaN or masked
     df = df.dropna()
-
-    # Close the dataset
     dataset.close()
 
     return df
+
 
 
 def filter_df(df, bbox=None, dates=None):
